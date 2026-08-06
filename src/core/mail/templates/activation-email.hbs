@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Activation Code</title>
+    <style>
+        /* Base Reset */
+        body, table, td, a {
+            text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            -webkit-text-size-adjust: 100%;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7f6;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            color: #333333;
+        }
+        /* Container */
+        .email-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+        /* Header */
+        .email-header {
+            background-color: #0056b3; 
+            color: #ffffff;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        .email-header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        /* Body Content */
+        .email-body {
+            padding: 40px 30px;
+            line-height: 1.6;
+        }
+        .email-body p {
+            margin: 0 0 20px 0;
+            font-size: 16px;
+        }
+        /* Activation Code Box */
+        .activation-box {
+            background-color: #eef5fa;
+            border: 2px dashed #0056b3;
+            border-radius: 6px;
+            text-align: center;
+            padding: 25px;
+            margin: 30px 0;
+        }
+        .activation-code {
+            font-size: 36px;
+            font-weight: bold;
+            letter-spacing: 6px;
+            color: #0056b3;
+            margin: 0;
+        }
+        /* Footer */
+        .email-footer {
+            background-color: #f9f9f9;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #888888;
+            border-top: 1px solid #eeeeee;
+        }
+        .email-footer p {
+            margin: 5px 0;
+        }
+        .email-footer a {
+            color: #0056b3;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="email-container">
+        <!-- Header Section -->
+        <div class="email-header">
+            <h1>MediBook</h1>
+        </div>
+
+        <!-- Body Section -->
+        <div class="email-body">
+            <p>To: {{userEmail}}</p>
+            <p>Hello {{#if userName}}{{userName}}{{else}}there{{/if}},</p>
+            <p>Welcome to MediBook! We are thrilled to have you. To complete your registration and secure your patient portal, please use the activation code below.</p>
+            
+            <!-- Code Section -->
+            <div class="activation-box">
+                <p style="margin: 0 0 10px 0; font-size: 14px; color: #666; letter-spacing: normal;">Your Activation Code:</p>
+                <p class="activation-code">{{activationCode}}</p>
+            </div>
+
+            <p>Please enter this code on the registration page. For your security, this code will expire in 10 minutes.</p>
+            <p>If you did not request this email, please ignore it or contact our support team if you have any concerns.</p>
+            
+            <p>In good health,<br><strong>The MediBook Team</strong></p>
+        </div>
+
+        <!-- Footer Section -->
+        <div class="email-footer">
+            <p>Need help? Contact us at <a href="mailto:{{supportEmail}}">support@medibook.com</a> or call +998 99 777 1 7777.</p>
+            <p>&copy; {{year}} MediBook. All rights reserved.</p>
+            <p>Tashkent</p>
+        </div>
+    </div>
+
+</body>
+</html>
