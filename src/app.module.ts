@@ -34,11 +34,17 @@ import { BotModule } from './modules/telegram/bot.module';
       synchronize: true,
       sync: {
         force: process.env.NODE_ENV === 'test',
-        // force: process.env.NODE_ENV === 'development',
         alter: true
       },
       autoLoadModels: true,
+      dialectOptions: {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false
+        }
+      }
     }),
+
     TelegrafModule.forRootAsync({
       inject: [ConfigService],
       useFactory: async (config: ConfigService) => ({
