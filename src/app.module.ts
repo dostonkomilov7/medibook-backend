@@ -25,11 +25,7 @@ import { BotModule } from './modules/telegram/bot.module';
     }),
     SequelizeModule.forRoot({
       dialect: "postgres",
-      database: process.env.DB_NAME,
-      port: Number(process.env.DB_PORT),
-      host: process.env.DB_HOST,
-      username: process.env.DB_USER,
-      password: process.env.DB_PASS,
+      uri: process.env.DATABASE_URL,
       logging: console.log,
       synchronize: true,
       sync: {
@@ -44,6 +40,28 @@ import { BotModule } from './modules/telegram/bot.module';
         }
       }
     }),
+
+    // SequelizeModule.forRoot({
+    //   dialect: "postgres",
+    //   database: process.env.DB_NAME,
+    //   port: Number(process.env.DB_PORT),
+    //   host: process.env.DB_HOST,
+    //   username: process.env.DB_USER,
+    //   password: process.env.DB_PASS,
+    //   logging: console.log,
+    //   synchronize: true,
+    //   sync: {
+    //     force: process.env.NODE_ENV === 'test',
+    //     alter: true
+    //   },
+    //   autoLoadModels: true,
+    //   dialectOptions: {
+    //     ssl: {
+    //       require: true,
+    //       rejectUnauthorized: false
+    //     }
+    //   }
+    // }),
 
     TelegrafModule.forRootAsync({
       inject: [ConfigService],
