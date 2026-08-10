@@ -1,7 +1,7 @@
 import { Doctor } from "@/modules/doctors/model/doctors.model";
 import { BelongsTo, Column, DataType, ForeignKey, Model, Table } from "sequelize-typescript";
 
-@Table({tableName: 'schedule', timestamps: true, paranoid: true})
+@Table({tableName: 'schedule', timestamps: true })
 export class Schedule extends Model {
     @ForeignKey(() => Doctor)
     @Column({type: DataType.INTEGER, allowNull: false})

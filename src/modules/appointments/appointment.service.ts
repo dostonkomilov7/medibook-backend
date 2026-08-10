@@ -42,10 +42,16 @@ export class AppointmentService {
                 ]
             })
 
+            // Was filtering on { id: id } — the appointment's own primary
+            // key — instead of { patient_id: id }, so these counts almost
+            // never matched the actual signed-in user's appointments (only
+            // by coincidence, when some appointment's own row id happened
+            // to equal their user id). That made every summary-strip value
+            // and tab count on my-appointments effectively random/wrong.
             const totalUpcoming = await this.appointmentModel.count({
                 where: {
                     [Op.and]: [
-                        { id: id },
+                        { patient_id: id },
                         { status: 'Confirmed' }
                     ]
                 }
@@ -53,7 +59,7 @@ export class AppointmentService {
             const totalPending = await this.appointmentModel.count({
                 where: {
                     [Op.and]: [
-                        { id: id },
+                        { patient_id: id },
                         { status: 'Pending' }
                     ]
                 }
@@ -61,7 +67,7 @@ export class AppointmentService {
             const totalCompleted = await this.appointmentModel.count({
                 where: {
                     [Op.and]: [
-                        { id: id },
+                        { patient_id: id },
                         { status: 'Completed' }
                     ]
                 }
@@ -69,7 +75,7 @@ export class AppointmentService {
             const totalCancelled = await this.appointmentModel.count({
                 where: {
                     [Op.and]: [
-                        { id: id },
+                        { patient_id: id },
                         { status: 'Cancelled' }
                     ]
                 }
@@ -92,22 +98,35 @@ export class AppointmentService {
 
     async createAppointment(dto: CreateAppointmentDto) {
         try {
-            await this.appointmentModel.create({
+            const appointment = await this.appointmentModel.create({
                 patient_id: dto.patient_id,
                 doctor_id: dto.doctor_id,
                 appointment_date: dto.appointment_date,
                 appointment_time: dto.appointment_time,
+                reason: dto.reason,
+                notes: dto.notes,
                 status: AppointmentStatus.PENDING
             })
+
 
             const user = await this.userService.getUser(String(dto.patient_id))
             const doctor = await this.doctorService.getSingleDoctor(String(dto.doctor_id))
 
-            await this.botService.sendMessage(user.users[0].dataValues.telegram_id, `Appointment successfully created 🎉\n\n Now, status is pending ⏳. We will respond soon`)
-            await this.botService.sendMessage(doctor?.doctors[0].dataValues.user.dataValues.telegram_id, `You have an new appointment 🆕\n\n Please, check and respond to the appointment in the website ✅.\n\n\n Thank You Mr Doctor😊`)
+            if (doctor?.doctors[0].dataValues.user.dataValues.telegram_id) {
+                await this.botService.sendMessage(doctor?.doctors[0].dataValues.user.dataValues.telegram_id, `You have an new appointment 🆕\n\n Please, check and respond to the appointment in the website ✅.\n\n\n Thank You Mr Doctor😊`)
+            }
+            if (user.users[0].dataValues.telegram_id) {
+                await this.botService.sendMessage(user.users[0].dataValues.telegram_id, `Appointment successfully created 🎉\n\n Now, status is pending ⏳. We will respond soon`)
+            }
+
             return {
                 success: true,
-                message: "Successfully created"
+                message: "Successfully created",
+                // The frontend uses this as the real booking reference
+                // (e.g. "MB-42") — without it, it had no way to tie the
+                // reference shown to the user back to the actual row and
+                // silently fell back to a client-side Date.now() stamp.
+                appointment: { id: appointment.id }
             }
 
         } catch (error) {
@@ -123,24 +142,23 @@ export class AppointmentService {
             if (!existing) {
                 throw new NotFoundException("Appointment is not found")
             }
-
             const user = await this.userService.getUser(String(existing.dataValues.patient_id))
-            const doctor = await this.doctorService.getSingleDoctor(String(existing.dataValues.patient_id))
+            const doctor = await this.doctorService.getSingleDoctor(String(existing.dataValues.doctor_id))
 
             if (existing.dataValues.status === 'Pending') {
                 await this.appointmentModel.update({ status: AppointmentStatus.CONFIRMED }, { where: { id } })
-                if(doctor?.doctors[0]) {
+                if (doctor?.doctors[0].dataValues.user.dataValues.telegram_id) {
                     await this.botService.sendMessage(doctor?.doctors[0].dataValues.user.dataValues.telegram_id, `You have confirmed appointment 🎉\n\n Check the appointment.`)
                 }
-                if(user?.users[0]) {
+                if (user.users[0].dataValues.telegram_id) {
                     await this.botService.sendMessage(user.users[0].dataValues.telegram_id, `Appointment has been confirmed 🎉\n\n Now, status is confirmed ✅. Check the appointment.`)
                 }
             } else {
                 await this.appointmentModel.update({ status: AppointmentStatus.COMPLETED }, { where: { id } })
-                if(doctor?.doctors[0]) {
+                if (doctor?.doctors[0].dataValues.user.dataValues.telegram_id) {
                     await this.botService.sendMessage(doctor?.doctors[0].dataValues.user.dataValues.telegram_id, `You have successfully completed an appointment 🎉\n\n We wish you success in your work 🤝🏻`)
                 }
-                if(user?.users[0]) {
+                if (user.users[0].dataValues.telegram_id) {
                     await this.botService.sendMessage(user.users[0].dataValues.telegram_id, `Appointment has been completed 🎉\n\n We are glad for working with you. Thank You for your choice 😊`)
                 }
             }

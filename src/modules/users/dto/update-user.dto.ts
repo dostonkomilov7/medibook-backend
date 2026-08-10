@@ -1,4 +1,5 @@
-import { IsInt, IsOptional, IsString } from "class-validator";
+import { UserStatus } from "@/core/constants/constants";
+import { IsEnum, IsInt, IsOptional, IsString } from "class-validator";
 
 export class UpdateUserDto {
     @IsOptional()
@@ -24,4 +25,8 @@ export class UpdateUserDto {
     @IsOptional()
     @IsString()
     telegram_id: string;
+
+    @IsOptional()
+    @IsEnum(UserStatus)
+    status: UserStatus;
 }

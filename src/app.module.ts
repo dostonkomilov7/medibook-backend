@@ -55,12 +55,6 @@ import { BotModule } from './modules/telegram/bot.module';
     //     alter: true
     //   },
     //   autoLoadModels: true,
-    //   dialectOptions: {
-    //     ssl: {
-    //       require: true,
-    //       rejectUnauthorized: false
-    //     }
-    //   }
     // }),
 
     TelegrafModule.forRootAsync({

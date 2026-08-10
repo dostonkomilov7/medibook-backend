@@ -4,7 +4,7 @@ import { Schedule } from "@/modules/schedule/model/schedule.model";
 import { User } from "@/modules/users/model/user.model";
 import { BelongsTo, Column, DataType, ForeignKey, HasMany, Model, Table } from "sequelize-typescript";
 
-@Table({ tableName: 'doctors', timestamps: true, paranoid: true })
+@Table({ tableName: 'doctors', timestamps: true })
 export class Doctor extends Model {
     @Column({ type: DataType.STRING, allowNull: false })
     specialization: string;

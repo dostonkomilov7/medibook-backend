@@ -30,8 +30,8 @@ export class DoctorController {
         return await this.doctorService.createDoctor(dto, res)
     }
 
-    @Protected(true)
-    @Roles([UserRole.admin, UserRole.doctor])
+    // @Protected(true)
+    // @Roles([UserRole.admin, UserRole.doctor])
     @Patch(':id')
     async updateDoctor(@Param('id') id: string, @Body() dto: UpdateDoctorDto) {
         return await this.doctorService.updateDoctor(id, dto)

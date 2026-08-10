@@ -3,7 +3,7 @@ import { Doctor } from "@/modules/doctors/model/doctors.model";
 import { User } from "@/modules/users/model/user.model";
 import { BelongsTo, Column, DataType, ForeignKey, Model, Table } from "sequelize-typescript";
 
-@Table({tableName: 'appointments', timestamps: true, paranoid: true})
+@Table({tableName: 'appointments', timestamps: true })
 export class Appointment extends Model {
     @ForeignKey(() => User)
     @Column({type: DataType.INTEGER, allowNull: false})
@@ -27,5 +27,11 @@ export class Appointment extends Model {
 
     @Column({type: DataType.ENUM(...Object.values(AppointmentStatus)), defaultValue: AppointmentStatus.PENDING})
     status: AppointmentStatus;
+
+    @Column({type: DataType.STRING, allowNull: true})
+    reason: string;
+
+    @Column({type: DataType.TEXT, allowNull: true})
+    notes: string;
 
 }

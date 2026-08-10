@@ -56,13 +56,14 @@ export class DoctorService {
                 doctors
             }
         } catch (error) {
-            
+            throw error
         }
     }
 
     async getDoctorWithPatients(id: string) {
         try {
             const doctorId = await this.doctorModel.findOne({ where: { user_id: id } });
+            if(!doctorId) return {success: false, doctors: []}
             const doctors = await this.doctorModel.findAll({
                 include: [
                     {
@@ -75,16 +76,16 @@ export class DoctorService {
                 ]
             })
 
-            doctors.forEach(doctor => {
-                doctor.dataValues.appointments = [
-                    ...new Map(
-                        doctor.dataValues.appointments.map((app: any) => [
-                            app?.dataValues?.user?.dataValues?.id,
-                            app
-                        ])
-                    ).values()
-                ]
-            })
+            // doctors.forEach(doctor => {
+            //     doctor.dataValues.appointments = [
+            //         ...new Map(
+            //             doctor.dataValues.appointments.map((app: any) => [
+            //                 app?.dataValues?.user?.dataValues?.id,
+            //                 app
+            //             ])
+            //         ).values()
+            //     ]
+            // })
 
             return {
                 success: true,

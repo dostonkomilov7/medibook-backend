@@ -62,7 +62,8 @@ export class MailerService {
             const htmlContent = compiledTemplate(templateData);
     
             await this.transport.sendMail({
-                to: 'dostonkomilov070@gmail.com',
+                from: 'dostonkomilov070@gmail.com',
+                to: user?.email,
                 html: htmlContent,
                 subject: 'Activate Your Account - Welcome! 🎉',
             })

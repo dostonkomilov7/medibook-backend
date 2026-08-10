@@ -3,7 +3,7 @@ import { Appointment } from "@/modules/appointments/model/appointments.model";
 import { Doctor } from "@/modules/doctors/model/doctors.model";
 import { Column, DataType, HasMany, Model, Table } from "sequelize-typescript"
 
-@Table({ tableName: 'users', timestamps: true, paranoid: true })
+@Table({ tableName: 'users', timestamps: true})
 export class User extends Model {
     @Column({ type: DataType.STRING, allowNull: false })
     full_name: string;
