@@ -14,6 +14,8 @@ import { RolesGuard } from './common/guards/roles.guard';
 import { TelegrafModule } from 'nestjs-telegraf';
 import { session } from 'telegraf';
 import { BotModule } from './modules/telegram/bot.module';
+import { HealthMetricModule } from './modules/health-metrics/health-metric.module';
+import { MedicationModule } from './modules/medications/medication.module';
 
 @Module({
   imports: [
@@ -71,6 +73,8 @@ import { BotModule } from './modules/telegram/bot.module';
     DoctorModule,
     AppointmentModule,
     BotModule,
+    HealthMetricModule,
+    MedicationModule,
   ],
   providers: [
     {

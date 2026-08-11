@@ -22,3 +22,12 @@ export enum AppointmentStatus {
     COMPLETED = 'Completed',
 }
 
+export enum HealthMetricType {
+    bloodPressure = 'bloodPressure',
+    heartRate = 'heartRate',
+    bloodSugar = 'bloodSugar',
+    bmi = 'bmi',
+    weight = 'weight',
+    cholesterol = 'cholesterol',
+}
+

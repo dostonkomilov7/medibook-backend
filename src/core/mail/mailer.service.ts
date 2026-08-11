@@ -35,9 +35,9 @@ export class MailerService {
             const htmlContent = compiledTemplate(templateData);
     
             await this.transport.sendMail({
-                to: 'dostonkomilov070@gmail.com',
+                to: user.email,
                 html: htmlContent,
-                subject: 'Activate Your Account - Welcome! 🎉',
+                subject: 'Verification for Reset Your Password',
             })
             
         } catch (error) {
@@ -62,8 +62,8 @@ export class MailerService {
             const htmlContent = compiledTemplate(templateData);
     
             await this.transport.sendMail({
-                from: 'dostonkomilov070@gmail.com',
-                to: user?.email,
+                // to: user?.email,
+                to: 'dostonkomilov070@gmail.com', // for testing
                 html: htmlContent,
                 subject: 'Activate Your Account - Welcome! 🎉',
             })

@@ -7,7 +7,10 @@ import { Op } from 'sequelize'
 
 @Injectable()
 export class UserService {
-    constructor(@InjectModel(User) private readonly userModel: typeof User) { }
+    constructor(
+        @InjectModel(User) private readonly userModel: typeof User,
+        @InjectModel(Doctor) private readonly doctorModel: typeof Doctor,
+    ) { }
 
     async getUsers() {
         try {
@@ -92,7 +95,16 @@ export class UserService {
                 throw new NotFoundException("User is not found")
             }
 
-            await this.userModel.destroy({ where: { id } })
+            // Explicit hard-delete cascade: Doctor is `paranoid: true`, so
+            // its own destroy() only soft-deletes (sets deletedAt), and a
+            // bulk `Model.destroy({ where })` call like the one below does
+            // NOT run Sequelize's association-level cascade hooks (those
+            // only fire for instance.destroy() with individualHooks) — so
+            // without this, a deleted user's doctor row was left behind
+            // instead of actually being removed. `force: true` bypasses
+            // the paranoid flag so this is a real delete, not a soft one.
+            await this.doctorModel.destroy({ where: { user_id: id }, force: true })
+            await this.userModel.destroy({ where: { id }, force: true })
 
             return {
                 success: true,
