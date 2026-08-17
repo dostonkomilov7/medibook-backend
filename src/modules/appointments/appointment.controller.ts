@@ -10,34 +10,40 @@ import { Roles } from "@/common/decorators/roles.decorator";
 export class AppointmentController {
     constructor(private readonly appointmentService: AppointmentService) { }
 
-    // @Protected(true)
-    // @Roles([UserRole.admin, UserRole.doctor, UserRole.user])
+    @Protected(true)
+    @Roles([UserRole.admin, UserRole.user])
     @Get(':id')
     async getAppointments(@Param('id') id: string) {
         return await this.appointmentService.getAppointments(id)
     }
 
+    // Global, unfiltered list — admin-dashboard/department-management use
+    // this for site-wide stats; book-appointment also reads it (as any
+    // signed-in patient) purely to know which slots are already taken.
+    @Protected(true)
+    @Roles([UserRole.admin, UserRole.user])
     @Get()
     async getAppointment() {
         return await this.appointmentService.getAppointment()
     }
 
-    // @Protected(true)
-    // @Roles([UserRole.admin, UserRole.doctor])
+    @Protected(true)
+    @Roles([UserRole.admin, UserRole.doctor, UserRole.user])
     @Post()
     async createAppointment(@Body() dto: CreateAppointmentDto) {
         return await this.appointmentService.createAppointment(dto)
     }
 
-    // @Protected(true)
-    // @Roles([UserRole.admin, UserRole.doctor])
+    @Protected(true)
+    @Roles([UserRole.admin, UserRole.doctor])
     @Patch(':id')
     async updateAppointment(@Param('id') id: string) {
         return await this.appointmentService.updateAppointment(id)
     }
 
-    // @Protected(true)
-    // @Roles([UserRole.admin, UserRole.doctor])
+    // Any signed-in role can cancel — patients cancel their own visit,
+    // doctors cancel from schedule/all-patients, admins from either panel.
+    @Protected(true)
     @Delete(':id')
     async deleteAppointment(@Param('id') id: string) {
         return await this.appointmentService.deleteAppointment(id)

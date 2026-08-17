@@ -17,8 +17,8 @@ export class ScheduleController {
         return await this.scheduleService.getSchedules()
     }
 
-    // @Protected(true)
-    // @Roles([UserRole.admin, UserRole.doctor])
+    @Protected(true)
+    @Roles([UserRole.admin, UserRole.doctor])
     @Post()
     async createSchedule(@Body() dto: CreateScheduleDto) {
         return await this.scheduleService.createSchedule(dto)

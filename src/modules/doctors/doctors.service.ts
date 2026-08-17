@@ -9,6 +9,7 @@ import type { Response } from "express";
 import { UserRole } from "@/core/constants/constants";
 import { User } from "../users/model/user.model";
 import { Appointment } from "../appointments/model/appointments.model";
+import { Schedule } from "../schedule/model/schedule.model";
 
 @Injectable()
 export class DoctorService {
@@ -20,7 +21,10 @@ export class DoctorService {
 
     async getDoctors() {
         try {
-            const doctors = await this.doctorModel.findAll({ include: [User] })
+            // Schedule + Appointment added so the admin doctor-profile
+            // modal can show real work hours and a real appointment
+            // count without a second round-trip per doctor.
+            const doctors = await this.doctorModel.findAll({ include: [User, Schedule, Appointment] })
             const countActive = await this.doctorModel.count({
                 include: [{
                     model: User,

@@ -1,9 +1,10 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/sequelize";
 import { User } from "./model/user.model";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { Doctor } from "../doctors/model/doctors.model";
 import { Op } from 'sequelize'
+import { UserStatus } from "@/core/constants/constants";
 
 @Injectable()
 export class UserService {
@@ -79,6 +80,36 @@ export class UserService {
             return {
                 success: true,
                 message: "Successfully updated"
+            }
+
+        } catch (error) {
+            console.log(error)
+            throw error
+        }
+    }
+
+    // Unauthenticated by design (see the controller) — only ever meant to
+    // let the verify-email flow clean up an account that never finished
+    // OTP activation. Refusing anything but an Inactive account is what
+    // keeps this safe to leave open.
+    async cancelUnverifiedRegistration(id: string) {
+        try {
+            const user = await this.userModel.findOne({ where: { id } })
+
+            if (!user) {
+                throw new NotFoundException("User is not found")
+            }
+
+            if (user.dataValues.status !== UserStatus.inactive) {
+                throw new ForbiddenException("This account is already active")
+            }
+
+            await this.doctorModel.destroy({ where: { user_id: id }, force: true })
+            await this.userModel.destroy({ where: { id }, force: true })
+
+            return {
+                success: true,
+                message: "Successfully deleted"
             }
 
         } catch (error) {

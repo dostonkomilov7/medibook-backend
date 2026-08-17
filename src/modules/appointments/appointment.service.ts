@@ -105,6 +105,13 @@ export class AppointmentService {
                 appointment_time: dto.appointment_time,
                 reason: dto.reason,
                 notes: dto.notes,
+                // Was silently dropped here — the booking form's urgency
+                // picker was fully wired up client-side but every created
+                // appointment still landed on the DB default (Routine)
+                // since this field was never listed for .create(), which
+                // is why "Urgent Cases" on the doctor dashboard never
+                // moved for real bookings.
+                urgency: dto.urgency,
                 status: AppointmentStatus.PENDING
             })
 

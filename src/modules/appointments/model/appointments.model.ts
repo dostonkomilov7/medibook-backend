@@ -1,4 +1,4 @@
-import { AppointmentStatus } from "@/core/constants/constants";
+import { AppointmentStatus, AppointmentUrgency } from "@/core/constants/constants";
 import { Doctor } from "@/modules/doctors/model/doctors.model";
 import { User } from "@/modules/users/model/user.model";
 import { BelongsTo, Column, DataType, ForeignKey, Model, Table } from "sequelize-typescript";
@@ -33,5 +33,8 @@ export class Appointment extends Model {
 
     @Column({type: DataType.TEXT, allowNull: true})
     notes: string;
+
+    @Column({type: DataType.ENUM(...Object.values(AppointmentUrgency)), defaultValue: AppointmentUrgency.ROUTINE})
+    urgency: AppointmentUrgency;
 
 }

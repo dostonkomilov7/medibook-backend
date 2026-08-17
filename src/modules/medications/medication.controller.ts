@@ -9,20 +9,21 @@ import { UserRole } from "@/core/constants/constants";
 export class MedicationController {
     constructor(private readonly medicationService: MedicationService) { }
 
+    @Protected(true)
     @Get(':userId')
     async getMedications(@Param('userId') userId: string) {
         return await this.medicationService.getMedications(userId);
     }
 
-    // @Protected(true)
-    // @Roles([UserRole.user, UserRole.admin])
+    @Protected(true)
+    @Roles([UserRole.user, UserRole.admin])
     @Post()
     async createMedication(@Body() dto: CreateMedicationDto) {
         return await this.medicationService.createMedication(dto);
     }
 
-    // @Protected(true)
-    // @Roles([UserRole.user, UserRole.admin])
+    @Protected(true)
+    @Roles([UserRole.user, UserRole.admin])
     @Delete(':id')
     async deleteMedication(@Param('id') id: string) {
         return await this.medicationService.deleteMedication(id);

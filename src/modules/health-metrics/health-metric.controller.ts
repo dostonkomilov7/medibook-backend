@@ -9,13 +9,14 @@ import { UserRole } from "@/core/constants/constants";
 export class HealthMetricController {
     constructor(private readonly healthMetricService: HealthMetricService) { }
 
+    @Protected(true)
     @Get(':userId')
     async getHealthMetrics(@Param('userId') userId: string) {
         return await this.healthMetricService.getHealthMetrics(userId);
     }
 
-    // @Protected(true)
-    // @Roles([UserRole.user, UserRole.admin])
+    @Protected(true)
+    @Roles([UserRole.user, UserRole.admin])
     @Post()
     async upsertHealthMetric(@Body() dto: UpsertHealthMetricDto) {
         return await this.healthMetricService.upsertHealthMetric(dto);

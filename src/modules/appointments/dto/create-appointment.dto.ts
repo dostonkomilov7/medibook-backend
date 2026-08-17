@@ -1,5 +1,6 @@
+import { AppointmentUrgency } from "@/core/constants/constants";
 import { Type } from "class-transformer";
-import { IsInt, IsOptional, IsString } from "class-validator";
+import { IsEnum, IsInt, IsOptional, IsString } from "class-validator";
 
 export class CreateAppointmentDto{
     @Type(() => Number)
@@ -23,5 +24,9 @@ export class CreateAppointmentDto{
     @IsOptional()
     @IsString()
     notes: string;
+
+    @IsOptional()
+    @IsEnum(AppointmentUrgency)
+    urgency: AppointmentUrgency;
 
 }

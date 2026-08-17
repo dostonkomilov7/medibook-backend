@@ -8,5 +8,8 @@ export default () => ({
     },
     signature: {
         signature_key: process.env.SIGNATURE_KEY
+    },
+    google: {
+        client_id: process.env.GOOGLE_CLIENT_ID,
     }
 });

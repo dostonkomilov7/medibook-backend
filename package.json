@@ -31,6 +31,7 @@
     "class-validator": "^0.15.1",
     "cookie-parser": "^1.4.7",
     "express": "^5.2.1",
+    "google-auth-library": "^11.0.2",
     "handlebars": "^4.7.9",
     "imagekit": "^6.0.0",
     "multer": "^2.1.1",

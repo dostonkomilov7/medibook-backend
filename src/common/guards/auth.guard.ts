@@ -23,8 +23,15 @@ export class AuthGuard implements CanActivate {
         const request = ctx.getRequest<Request & { user: any }>()
         const response = ctx.getResponse<Response>()
 
-        const accessToken = request.cookies?.['accessToken']
-        const refreshToken = request.cookies?.['refreshToken']
+        // Login/activateUser set these cookies with `signed: true`, which
+        // makes cookie-parser move them into req.signedCookies (verified,
+        // "s:"-prefix stripped) instead of req.cookies — req.cookies never
+        // sees them at all. Reading from req.cookies here meant accessToken
+        // and refreshToken were always undefined, so every @Protected()
+        // route unconditionally threw "Token is not given". That's why it
+        // had been commented out on almost every route in the codebase.
+        const accessToken = request.signedCookies?.['accessToken']
+        const refreshToken = request.signedCookies?.['refreshToken']
 
         if (!accessToken || !refreshToken) {
             throw new UnauthorizedException("Token is not given")
@@ -93,6 +100,7 @@ export class AuthGuard implements CanActivate {
 
             response.cookie('accessToken', newAccessToken, {
                 signed: true,
+                httpOnly: true,
                 expires: new Date(
                     Date.now() + (this.configService.get('jwt.access_time')) * 1000,
                 )
