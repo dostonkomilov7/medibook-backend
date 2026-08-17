@@ -12,13 +12,12 @@ import { SigantureService } from "@/core/config/signature.service";
 import { Signature, ExpiredSignatureError } from "signed"
 import { MailerService } from "@/core/mail/mailer.service";
 import { OAuth2Client } from "google-auth-library"
+import { authCookieOptions } from "@/common/utils/cookie-options";
 import type { Response } from 'express'
 
 @Injectable()
 export class AuthService {
     private readonly signature: Signature;
-    // Where the *frontend* reset-password page lives — the signed link
-    // emailed to users has to point there, not at this API.
     private readonly FRONT_URL = process.env.FRONT_URL || 'http://localhost:3000';
     private readonly googleClient: OAuth2Client;
 
@@ -92,14 +91,12 @@ export class AuthService {
             const refreshToken = await this.generateRefreshToken({ id: existingUser.dataValues.id, role: existingUser.dataValues.role })
 
             res.cookie('accessToken', accessToken, {
-                signed: true,
-                httpOnly: true,
+                ...authCookieOptions(),
                 maxAge: this.configService.get('jwt.access_time') * 1000,
             })
 
             res.cookie('refreshToken', refreshToken, {
-                signed: true,
-                httpOnly: true,
+                ...authCookieOptions(),
                 maxAge: 7 * 24 * 60 * 60 * 1000,
             })
 
@@ -117,11 +114,6 @@ export class AuthService {
         }
     }
 
-    // "Continue with Google" — the frontend gets an ID token from Google
-    // Identity Services and hands it to us; we verify it was really issued
-    // by Google for our client ID (not just decode it) before trusting any
-    // of its claims. Finds-or-creates the account and logs in exactly like
-    // a normal email/password login (same cookies, same response shape).
     async googleLogin(idToken: string, res: Response) {
         try {
             const ticket = await this.googleClient.verifyIdToken({
@@ -137,10 +129,6 @@ export class AuthService {
             let existingUser = await this.userModel.findOne({ where: { email: payload.email } });
 
             if (!existingUser) {
-                // Google already verified this email, so there's no OTP step
-                // to run. There's no phone number or usable password either —
-                // a random, never-shown hash keeps the `password` column
-                // satisfied without producing a guessable/usable password.
                 const randomPassword = await this.hashPassword(randomBytes(32).toString('hex'));
                 existingUser = await this.userModel.create({
                     full_name: payload.name || payload.email.split('@')[0],
@@ -152,11 +140,7 @@ export class AuthService {
                 });
             } else {
                 const updates: Partial<{ google_id: string; status: UserStatus }> = {};
-                // Existing email/password account signing in with Google for
-                // the first time — link it instead of creating a duplicate.
                 if (!existingUser.dataValues.google_id) updates.google_id = payload.sub;
-                // An account that never finished OTP activation — Google's
-                // already-verified email is good enough to trust it now.
                 if (existingUser.dataValues.status !== UserStatus.active) updates.status = UserStatus.active;
                 if (Object.keys(updates).length) await existingUser.update(updates);
             }
@@ -165,14 +149,12 @@ export class AuthService {
             const refreshToken = await this.generateRefreshToken({ id: existingUser.dataValues.id, role: existingUser.dataValues.role })
 
             res.cookie('accessToken', accessToken, {
-                signed: true,
-                httpOnly: true,
+                ...authCookieOptions(),
                 maxAge: this.configService.get('jwt.access_time') * 1000,
             })
 
             res.cookie('refreshToken', refreshToken, {
-                signed: true,
-                httpOnly: true,
+                ...authCookieOptions(),
                 maxAge: 7 * 24 * 60 * 60 * 1000,
             })
 
@@ -190,8 +172,11 @@ export class AuthService {
     }
 
     async logout(res: Response) {
-        res.clearCookie('accessToken')
-        res.clearCookie('refreshToken')
+        // clearCookie has to be called with the same attributes the cookie
+        // was set with (path/sameSite/secure) or some browsers won't
+        // recognize it as the same cookie and silently no-op the clear.
+        res.clearCookie('accessToken', authCookieOptions())
+        res.clearCookie('refreshToken', authCookieOptions())
         return res.send({ success: true, message: "Logged out" })
     }
 
@@ -216,14 +201,12 @@ export class AuthService {
         const refreshToken = await this.generateRefreshToken({ id: existingUser.dataValues.id, role: existingUser.dataValues.role })
 
         res.cookie('accessToken', accessToken, {
-            signed: true,
-            httpOnly: true,
+            ...authCookieOptions(),
             maxAge: this.configService.get('jwt.access_time') * 1000,
         })
 
         res.cookie('refreshToken', refreshToken, {
-            signed: true,
-            httpOnly: true,
+            ...authCookieOptions(),
             maxAge: 7 * 24 * 60 * 60 * 1000,
         })
 

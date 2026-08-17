@@ -3,6 +3,7 @@ import { ConfigService } from "@nestjs/config";
 import { Reflector } from "@nestjs/core";
 import { JsonWebTokenError, JwtService, TokenExpiredError } from "@nestjs/jwt";
 import { PROTECTED_KEY } from "../decorators/protected.decorator";
+import { authCookieOptions } from "../utils/cookie-options";
 import type { Request, Response } from "express";
 import { UserRole } from "@/core/constants/constants";
 
@@ -99,8 +100,7 @@ export class AuthGuard implements CanActivate {
             const newAccessToken = await this.generateAccessToken(payload)
 
             response.cookie('accessToken', newAccessToken, {
-                signed: true,
-                httpOnly: true,
+                ...authCookieOptions(),
                 expires: new Date(
                     Date.now() + (this.configService.get('jwt.access_time')) * 1000,
                 )
