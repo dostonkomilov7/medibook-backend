@@ -16,5 +16,9 @@ export function authCookieOptions(): CookieOptions {
         httpOnly: true,
         secure: isProd,
         sameSite: isProd ? 'none' : 'lax',
+        // Explicit, so it doesn't end up scoped to "/auth" (the path of the
+        // request that set it) and then silently missing on requests to
+        // "/doctors", "/appointments", etc.
+        path: '/',
     };
 }
