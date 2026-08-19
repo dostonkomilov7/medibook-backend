@@ -19,18 +19,7 @@ export class MailerService implements OnModuleInit {
             }
         })
     }
-
-    // Every send call below already swallows its own errors (an activation
-    // code / reset link failing to send shouldn't fail the whole request),
-    // which means a broken SMTP setup fails completely silently — no
-    // email ever arrives, and nothing in the API response or an obvious
-    // place in the logs says why. This checks the connection and
-    // credentials once at boot and logs a clear pass/fail, so a
-    // deployment missing GOOGLE_EMAIL/APP_PASS (env vars set in a local
-    // .env file are NOT carried over to a host like Render automatically —
-    // they have to be added there separately) or with a revoked app
-    // password shows up immediately in the startup logs instead of only
-    // as "a user says they never got the email."
+    
     async onModuleInit() {
         if (!process.env.GOOGLE_EMAIL || !process.env.APP_PASS) {
             this.logger.error('GOOGLE_EMAIL / APP_PASS is not set in this environment — no email will ever send.');
