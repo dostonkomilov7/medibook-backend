@@ -11,12 +11,20 @@ export class MailerService implements OnModuleInit {
     private compiledTemplate: HandlebarsTemplateDelegate | null = null;
 
     constructor() {
+        // smtp.gmail.com resolves to both an IPv4 and an IPv6 address, and
+        // Render's outbound networking has no IPv6 route — connecting to
+        // the IPv6 one failed outright with ENETUNREACH instead of falling
+        // back to IPv4. Fixed process-wide in main.ts
+        // (dns.setDefaultResultOrder('ipv4first')) rather than here:
+        // nodemailer's TypeScript types don't declare a `family` transport
+        // option to force this per-connection, even though the underlying
+        // connection would accept one at runtime.
         this.transport = createTransport({
             service: 'gmail',
             auth: {
                 user: process.env.GOOGLE_EMAIL,
                 pass: process.env.APP_PASS
-            }
+            },
         })
     }
 

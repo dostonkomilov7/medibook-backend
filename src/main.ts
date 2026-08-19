@@ -2,6 +2,18 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import cookieParser from 'cookie-parser'
+import dns from 'dns'
+
+// Render's outbound networking has no IPv6 route, but plenty of hosts we
+// talk to (smtp.gmail.com among them — see MailerService, which hit this
+// as ENETUNREACH on an IPv6 address) resolve to both an IPv4 and an IPv6
+// address. Node's default DNS result order isn't guaranteed to prefer the
+// one that's actually reachable here, so any outbound connection that
+// happens to pick the IPv6 address fails outright instead of falling back
+// to IPv4. This changes the default for every dns.lookup() in the
+// process (which is what a hostname passed to net/tls/http connect calls
+// goes through) rather than patching each call site as it's discovered.
+dns.setDefaultResultOrder('ipv4first')
 
 // nestjs-telegraf calls `bot.launch(...)` without awaiting it or attaching
 // a .catch() (see createBotFactory in its source) — launch() internally
