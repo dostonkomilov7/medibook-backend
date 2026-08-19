@@ -1,7 +1,26 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import cookieParser from 'cookie-parser'
+
+// nestjs-telegraf calls `bot.launch(...)` without awaiting it or attaching
+// a .catch() (see createBotFactory in its source) — launch() internally
+// awaits the polling loop for as long as the bot runs, so that unawaited
+// promise only settles when polling stops for good. Telegraf's own
+// polling loop deliberately re-throws on a 409 ("Conflict: terminated by
+// other getUpdates request" — another process is already polling this
+// same bot token, e.g. a local dev instance and this deployment running
+// at once) instead of retrying, since it's not a transient error. With
+// nothing awaiting or catching that rejection, Node's default behavior
+// (since v15) is to treat it as fatal and crash the *entire* process —
+// so a Telegram-side conflict was taking the whole API down, not just the
+// bot. This is a gap in the library, not something fixable from our own
+// call site, so the safety net has to be a process-level handler instead.
+// A registration/appointment notification failing to send to Telegram
+// should never be able to take the whole backend offline.
+process.on('unhandledRejection', (reason) => {
+  Logger.error(`Unhandled promise rejection (kept the process alive): ${reason instanceof Error ? reason.stack ?? reason.message : String(reason)}`, undefined, 'UnhandledRejection');
+});
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
