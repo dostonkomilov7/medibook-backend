@@ -1,13 +1,3 @@
-// Standalone admin seeder — run manually with `pnpm run seed:admin`.
-//
-// Deliberately does NOT boot the Nest app (AppModule) to do this: that
-// would also start the Telegram bot poller and the HTTP server, which
-// isn't needed just to insert a row and would fight with whatever
-// instance (local dev or Render) is already polling the same bot token.
-// Instead it talks to Postgres directly with `pg`, the same way the
-// app itself eventually does, and hashes the password with `bcrypt`
-// exactly like AuthService does, so the seeded admin can log in through
-// the normal /auth/login endpoint.
 import { Client } from "pg";
 import bcrypt from "bcrypt";
 import { UserRole, UserStatus } from "../constants/constants";
@@ -15,7 +5,7 @@ import { UserRole, UserStatus } from "../constants/constants";
 async function main() {
     const email = process.env.ADMIN_LOGIN;
     const password = process.env.ADMIN_PASSWORD;
-    const fullName = process.env.ADMIN_FULL_NAME || "Admin";
+    const fullName = process.env.ADMIN_FULL_NAME || "Doston Komilov";
     const databaseUrl = process.env.DATABASE_URL;
 
     if (!databaseUrl) {
