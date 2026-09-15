@@ -4,12 +4,13 @@ services:
       context: ./
       dockerfile: Dockerfile
     ports: 
-      - ${PORT}:${PORT}
+      - "${PORT}:${PORT}"
     env_file:
       - .env
     depends_on:
       - postgres
-  
+    restart: always
+
   postgres:
     image: postgres:latest
     restart: always
@@ -20,7 +21,6 @@ services:
       POSTGRES_PASSWORD: ${DB_PASS}
       POSTGRES_DB: ${DB_NAME}
     volumes:
-      - postgres_data:/var/lib/postresql
-
+      - postgres_data:/var/lib/postgresql
 volumes:
   postgres_data:
