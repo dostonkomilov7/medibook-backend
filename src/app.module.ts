@@ -25,31 +25,9 @@ import { MedicationModule } from './modules/medications/medication.module';
       envFilePath: process.env.NODE_ENV === "test" ? '.env.testing' : ".env",
       load: [configuration],
     }),
-    SequelizeModule.forRoot({
-      dialect: "postgres",
-      uri: process.env.DATABASE_URL,
-      logging: console.log,
-      synchronize: true,
-      sync: {
-        force: process.env.NODE_ENV === 'test',
-        alter: true
-      },
-      autoLoadModels: true,
-      dialectOptions: {
-        ssl: {
-          require: true,
-          rejectUnauthorized: false
-        }
-      }
-    }),
-
     // SequelizeModule.forRoot({
     //   dialect: "postgres",
-    //   database: process.env.DB_NAME,
-    //   port: Number(process.env.DB_PORT),
-    //   host: process.env.DB_HOST,
-    //   username: process.env.DB_USER,
-    //   password: process.env.DB_PASS,
+    //   uri: process.env.DATABASE_URL,
     //   logging: console.log,
     //   synchronize: true,
     //   sync: {
@@ -57,7 +35,29 @@ import { MedicationModule } from './modules/medications/medication.module';
     //     alter: true
     //   },
     //   autoLoadModels: true,
+    //   dialectOptions: {
+    //     ssl: {
+    //       require: true,
+    //       rejectUnauthorized: false
+    //     }
+    //   }
     // }),
+
+    SequelizeModule.forRoot({
+      dialect: "postgres",
+      database: process.env.DB_NAME,
+      port: Number(process.env.DB_PORT),
+      host: process.env.DB_HOST,
+      username: process.env.DB_USER,
+      password: process.env.DB_PASS,
+      logging: console.log,
+      synchronize: true,
+      sync: {
+        force: process.env.NODE_ENV === 'test',
+        alter: true
+      },
+      autoLoadModels: true,
+    }),
 
     TelegrafModule.forRootAsync({
       inject: [ConfigService],
