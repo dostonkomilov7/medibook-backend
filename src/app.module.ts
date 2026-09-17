@@ -53,7 +53,6 @@ import { MedicationModule } from './modules/medications/medication.module';
       logging: console.log,
       synchronize: true,
       sync: {
-        force: process.env.NODE_ENV === 'test',
         alter: true
       },
       autoLoadModels: true,
