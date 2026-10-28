@@ -30,7 +30,6 @@ jobs:
           script: |
             cd /home/ubuntu/projects/medibook-backend
             git pull origin main
-            cd /home/ubuntu/projects
             docker compose down
             docker compose up --build -d
             docker compose exec backend-one npm run seed:admin
