@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/sequelize";
 import { Medication } from "./model/medication.model";
 import { CreateMedicationDto } from "./dto/create-medication.dto";
+import { AuthUser } from "@/common/decorators/current-user.decorator";
+import { assertSelfOrAdmin } from "@/common/utils/access";
 
 @Injectable()
 export class MedicationService {
@@ -34,13 +36,16 @@ export class MedicationService {
         }
     }
 
-    async deleteMedication(id: string) {
+    async deleteMedication(id: string, user: AuthUser) {
         try {
             const existing = await this.medicationModel.findByPk(id);
 
             if (!existing) {
                 throw new NotFoundException("Medication is not found");
             }
+
+            // Only the patient the medication belongs to (or an admin).
+            assertSelfOrAdmin(user, existing.get('patient_id'));
 
             await this.medicationModel.destroy({ where: { id } });
 

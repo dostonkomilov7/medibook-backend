@@ -1,17 +1,74 @@
+import { existsSync } from "fs";
 import { Client } from "pg";
 import bcrypt from "bcrypt";
 import { UserRole, UserStatus } from "../constants/constants";
 
+interface ConnectionSettings {
+    config: {
+        host?: string;
+        port?: number;
+        user?: string;
+        password?: string;
+        database?: string;
+        connectionString?: string;
+        ssl?: false | { require: boolean; rejectUnauthorized: boolean };
+    };
+    label: string; // where it connects to, for the log line (never the credentials)
+}
+
+function connectionSettings(): ConnectionSettings {
+    const { DB_HOST, DB_PORT, DB_USER, DB_PASS, DB_NAME, DATABASE_URL } = process.env;
+
+    if (DB_HOST && DB_USER && DB_NAME) {
+        return {
+            config: {
+                host: DB_HOST,
+                port: Number(DB_PORT) || 5432,
+                user: DB_USER,
+                password: DB_PASS,
+                database: DB_NAME,
+            },
+            label: `database "${DB_NAME}" on ${DB_HOST}`,
+        };
+    }
+
+    if (!DATABASE_URL) {
+        console.error("Neither DB_HOST/DB_USER/DB_NAME nor DATABASE_URL is set (looked in the environment and in ./.env).");
+        process.exit(1);
+    }
+
+    let target: URL;
+    try {
+        target = new URL(DATABASE_URL);
+    } catch {
+        console.error("DATABASE_URL is not a valid connection URL.");
+        process.exit(1);
+    }
+
+    // Hosted databases need TLS; a local one usually doesn't offer it.
+    const isLoopback = ["localhost", "127.0.0.1", "[::1]", "::1"].includes(target.hostname);
+
+    return {
+        config: {
+            connectionString: DATABASE_URL,
+            ssl: isLoopback ? false : { require: true, rejectUnauthorized: false },
+        },
+        label: `database "${target.pathname.slice(1)}" on ${target.hostname}`,
+    };
+}
+
 async function main() {
+    // A plain `node` run doesn't read .env — only the Nest app does, through
+    // ConfigModule — so run by hand from the project folder, ADMIN_LOGIN and the
+    // database settings looked unset. Load the file when it is there; variables
+    // that are already set still win (and inside the Docker container there is no
+    // .env — see .dockerignore — and compose provides them).
+    if (existsSync(".env")) process.loadEnvFile(".env");
+
     const email = process.env.ADMIN_LOGIN;
     const password = process.env.ADMIN_PASSWORD;
     const fullName = process.env.ADMIN_FULL_NAME || "Doston Komilov";
-    const databaseUrl = process.env.DATABASE_URL;
 
-    if (!databaseUrl) {
-        console.error("DATABASE_URL is not set.");
-        process.exit(1);
-    }
     if (!email || !password) {
         console.error("ADMIN_LOGIN and ADMIN_PASSWORD must both be set in .env before seeding.");
         process.exit(1);
@@ -21,10 +78,10 @@ async function main() {
         process.exit(1);
     }
 
-    const client = new Client({
-        connectionString: databaseUrl,
-        ssl: { require: true, rejectUnauthorized: false },
-    });
+    // Say where this is about to write before it connects (never the credentials).
+    const { config, label } = connectionSettings();
+    console.log(`Seeding into ${label}.`);
+    const client = new Client(config);
     await client.connect();
 
     try {
@@ -62,7 +119,22 @@ async function main() {
     }
 }
 
-main().catch((error) => {
+// `code` is the Node/pg error code (ENOTFOUND, ECONNREFUSED, 42P01, ...).
+main().catch((error: NodeJS.ErrnoException & { hostname?: string }) => {
+    if (error?.code === "ENOTFOUND") {
+        console.error(
+            `"${error.hostname}" can't be resolved from this machine. A bare name like "postgres" is a ` +
+            `Docker-compose service address and only works inside the compose network — set DB_HOST/DB_NAME/... ` +
+            `to a database you can reach.`,
+        );
+    } else if (error?.code === "ECONNREFUSED") {
+        console.error("Nothing is accepting connections at that address — is PostgreSQL running?");
+    } else if (error?.code === "42P01") {
+        console.error(
+            `The "users" table doesn't exist in that database yet. Start the backend once (pnpm start:dev) ` +
+            `so it creates the tables, then run the seed again.`,
+        );
+    }
     console.error("Seeding failed:", error);
     process.exit(1);
 });

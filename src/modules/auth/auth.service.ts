@@ -13,7 +13,13 @@ import { Signature, ExpiredSignatureError } from "signed"
 import { MailerService } from "@/core/mail/mailer.service";
 import { OAuth2Client } from "google-auth-library"
 import { authCookieOptions } from "@/common/utils/cookie-options";
+import { Op, literal } from "sequelize";
 import type { Response } from 'express'
+
+// The activation email promises "This code expires in 10 minutes".
+const ACTIVATION_CODE_TTL_MS = 10 * 60 * 1000
+// A 6-digit code has only a million values, so it can't survive unlimited guesses.
+const ACTIVATION_MAX_ATTEMPTS = 5
 
 @Injectable()
 export class AuthService {
@@ -75,7 +81,8 @@ export class AuthService {
 
     async login(dto: LoginDto, res: Response) {
         try {
-            const existingUser = await this.userModel.findOne({ where: { email: dto.email } });
+            // unscoped(): the User model hides `password` by default.
+            const existingUser = await this.userModel.unscoped().findOne({ where: { email: dto.email } });
 
             if (!existingUser) {
                 throw new NotFoundException('User is not found')
@@ -181,22 +188,39 @@ export class AuthService {
     }
 
     async activateUser(email: string, code: string, res: Response) {
-        const existingUser = await this.userModel.findOne({ where: { email } });
+        // unscoped(): the User model hides `otp` by default.
+        const existingUser = await this.userModel.unscoped().findOne({ where: { email } });
 
         if (!existingUser) {
             throw new NotFoundException("User is not found")
         }
 
-        if (code !== existingUser.dataValues.otp) {
+        // Spend one attempt *before* looking at the code, in a single UPDATE:
+        // parallel guesses can't each get a peek at the real code — only the
+        // first few get a row back — so it can't be brute-forced however fast
+        // requests arrive. Accounts with no code left (already activated, burned
+        // or expired) match nothing, exactly like a wrong code.
+        const [spent, [account]] = await this.userModel.unscoped().update(
+            { otp_attempts: literal('"otp_attempts" + 1') },
+            {
+                where: { email, otp: { [Op.ne]: null }, otp_attempts: { [Op.lt]: ACTIVATION_MAX_ATTEMPTS } },
+                returning: true,
+            },
+        )
+
+        if (!spent || code !== account.dataValues.otp) {
             throw new ConflictException("Otp is invalid")
         }
 
-        if (existingUser.dataValues.createdAt + (10 * 60 * 1000) < Date.now()) {
+        // createdAt is a Date: adding a number to it (what this used to do)
+        // builds a string, the comparison is then never true, and codes never
+        // expired.
+        if ((account.get('createdAt') as Date).getTime() + ACTIVATION_CODE_TTL_MS < Date.now()) {
             await this.userModel.update({ otp: null }, { where: { email } })
             throw new ConflictException("Otp is expired")
         }
 
-        await this.userModel.update({ status: UserStatus.active, otp: null }, { where: { email } })
+        await this.userModel.update({ status: UserStatus.active, otp: null, otp_attempts: 0 }, { where: { email } })
         const accessToken = await this.generateAccessToken({ id: existingUser.dataValues.id, role: existingUser.dataValues.role })
         const refreshToken = await this.generateRefreshToken({ id: existingUser.dataValues.id, role: existingUser.dataValues.role })
 
@@ -222,10 +246,7 @@ export class AuthService {
     async forgotPassword(email: string) {
         try {
             const existingUser = await this.userModel.findOne({ where: { email } });
-
-            // Deliberately the same response whether or not the email is
-            // registered — confirming/denying an account's existence here
-            // would let anyone enumerate real user emails.
+            
             if (!existingUser) {
                 return { success: true, message: "If that email is registered, we've sent a password reset link." };
             }

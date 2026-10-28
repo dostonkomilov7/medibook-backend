@@ -1,7 +1,11 @@
 import { AppointmentStatus } from "@/core/constants/constants";
-import { IsString } from "class-validator";
+import { IsEnum, IsOptional } from "class-validator";
 
 export class UpdateAppointmentDto {
-    @IsString()
-    status: AppointmentStatus;
+    // Optional on purpose: the doctor panels call PATCH without a body to
+    // push an appointment one step forward. When a status is given it must
+    // be that next step (Pending -> Confirmed -> Completed).
+    @IsOptional()
+    @IsEnum(AppointmentStatus)
+    status?: AppointmentStatus;
 }

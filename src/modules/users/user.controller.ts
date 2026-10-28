@@ -3,6 +3,8 @@ import { UserService } from "./user.service";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import { Protected } from "@/common/decorators/protected.decorator";
 import { Roles } from "@/common/decorators/roles.decorator";
+import { AuthUser, CurrentUser } from "@/common/decorators/current-user.decorator";
+import { assertSelfOrAdmin } from "@/common/utils/access";
 import { UserRole } from "@/core/constants/constants";
 
 @Controller('/users')
@@ -17,10 +19,12 @@ export class UserController {
     }
 
     // Every dashboard loads its own profile through this right after
-    // login/activation — open to any signed-in role.
+    // login/activation — open to any signed-in role, but only for your own
+    // id (admins may look anyone up).
     @Protected(true)
     @Get(':id')
-    async getUser(@Param('id') id: string) {
+    async getUser(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+        assertSelfOrAdmin(user, id);
         return await this.userService.getUser(id);
     }
 

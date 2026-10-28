@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsInt, IsOptional, IsString } from "class-validator";
+import { IsInt, IsOptional, IsString, Max, Min } from "class-validator";
 
 export class CreateDoctorDto {
     @IsString()
@@ -14,6 +14,14 @@ export class CreateDoctorDto {
     @IsOptional()
     @IsString()
     bio: string;
+
+    @IsOptional()
+    @Type(() => Number)
+    @IsInt()
+    @Min(0)
+    // the column is a Postgres INTEGER — beyond this the database answers 500
+    @Max(2147483647)
+    consultation_fee: number;
 
     @IsOptional()
     @IsString()

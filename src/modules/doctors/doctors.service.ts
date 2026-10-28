@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/sequelize";
 import { Doctor } from "./model/doctors.model";
 import { CreateDoctorDto } from "./dto/create-doctor.dto";
@@ -7,6 +7,8 @@ import { JwtService } from "@nestjs/jwt";
 import { ConfigService } from "@nestjs/config";
 import type { Response } from "express";
 import { UserRole } from "@/core/constants/constants";
+import { AuthUser } from "@/common/decorators/current-user.decorator";
+import { assertSelfOrAdmin } from "@/common/utils/access";
 import { User } from "../users/model/user.model";
 import { Appointment } from "../appointments/model/appointments.model";
 import { Schedule } from "../schedule/model/schedule.model";
@@ -19,12 +21,16 @@ export class DoctorService {
         private readonly configService: ConfigService,
     ) { }
 
-    async getDoctors() {
+    async getDoctors(role: UserRole) {
         try {
             // Schedule + Appointment added so the admin doctor-profile
             // modal can show real work hours and a real appointment
-            // count without a second round-trip per doctor.
-            const doctors = await this.doctorModel.findAll({ include: [User, Schedule, Appointment] })
+            // count without a second round-trip per doctor. Appointment
+            // rows carry patient ids, reasons and notes, so only admins get
+            // them — the booking picker and the doctor panels just need the
+            // doctor, account and schedule data.
+            const include = role === UserRole.admin ? [User, Schedule, Appointment] : [User, Schedule]
+            const doctors = await this.doctorModel.findAll({ include })
             const countActive = await this.doctorModel.count({
                 include: [{
                     model: User,
@@ -110,6 +116,7 @@ export class DoctorService {
                 experience: dto.experience,
                 department: dto.department,
                 bio: dto.bio,
+                consultation_fee: dto.consultation_fee,
                 type: dto.type,
                 user_id: dto.user_id,
             })
@@ -137,12 +144,21 @@ export class DoctorService {
         }
     }
 
-    async updateDoctor(id: string, dto: UpdateDoctorDto) {
+    async updateDoctor(id: string, dto: UpdateDoctorDto, user: AuthUser) {
         try {
             const existing = await this.doctorModel.findByPk(id);
 
             if (!existing) {
                 throw new NotFoundException("Doctor is not found")
+            }
+
+            // Doctors edit their own profile only; admins any.
+            assertSelfOrAdmin(user, existing.get('user_id'))
+
+            // Suspending / reactivating is a moderation call — if doctors could
+            // set their own status, a suspended doctor could undo it.
+            if (dto.status !== undefined && user.role !== UserRole.admin) {
+                throw new ForbiddenException("Only an admin can change a doctor's status")
             }
 
             await this.doctorModel.update(dto, { where: { id } })

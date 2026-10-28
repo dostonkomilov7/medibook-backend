@@ -1,8 +1,13 @@
 import { UserRole, UserStatus } from "@/core/constants/constants";
 import { Appointment } from "@/modules/appointments/model/appointments.model";
 import { Doctor } from "@/modules/doctors/model/doctors.model";
-import { Column, DataType, HasMany, Model, Table } from "sequelize-typescript"
+import { Column, DataType, DefaultScope, HasMany, Model, Table } from "sequelize-typescript"
 
+// The password hash and the OTP (and its guess counter) are never loaded unless
+// a query asks for them, so no endpoint — nor any `include: [User]` under
+// Doctor/Appointment — can put them in a response by accident. The few places
+// that really need them (login, OTP activation) opt in with `User.unscoped()`.
+@DefaultScope(() => ({ attributes: { exclude: ['password', 'otp', 'otp_attempts'] } }))
 @Table({ tableName: 'users', timestamps: true})
 export class User extends Model {
     @Column({ type: DataType.STRING, allowNull: false })
@@ -26,6 +31,11 @@ export class User extends Model {
 
     @Column({ type: DataType.STRING(6), allowNull: true })
     otp: string;
+
+    // Wrong activation-code guesses so far — the code is dead after
+    // ACTIVATION_MAX_ATTEMPTS (see AuthService.activateUser).
+    @Column({ type: DataType.INTEGER, allowNull: false, defaultValue: 0 })
+    otp_attempts: number;
 
     @Column({type: DataType.STRING, allowNull: true, unique: true})
     telegram_id: string;

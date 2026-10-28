@@ -1,12 +1,18 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/sequelize";
 import { Schedule } from "./model/schedule.model";
+import { Doctor } from "../doctors/model/doctors.model";
 import { CreateScheduleDto } from "./dto/create-schedule.dto";
 import { UpdateScheduleDto } from "./dto/update-schedule.dto";
+import { AuthUser } from "@/common/decorators/current-user.decorator";
+import { UserRole } from "@/core/constants/constants";
 
 @Injectable()
 export class ScheduleService {
-    constructor(@InjectModel(Schedule) private readonly scheduleService: typeof Schedule) {}
+    constructor(
+        @InjectModel(Schedule) private readonly scheduleService: typeof Schedule,
+        @InjectModel(Doctor) private readonly doctorModel: typeof Doctor,
+    ) {}
 
     async getSchedules() {
         try {
@@ -23,8 +29,17 @@ export class ScheduleService {
         }
     }
 
-    async createSchedule(dto: CreateScheduleDto) {
+    async createSchedule(dto: CreateScheduleDto, user: AuthUser) {
         try {
+            // A doctor can only fill in their own calendar; admins any.
+            if (user.role !== UserRole.admin) {
+                const own = await this.doctorModel.findOne({ where: { id: dto.doctor_id, user_id: user.id }, attributes: ['id'] })
+
+                if (!own) {
+                    throw new ForbiddenException("Access denied")
+                }
+            }
+
             await this.scheduleService.create({
                 doctor_id: dto.doctor_id,
                 work_day: dto.work_day,

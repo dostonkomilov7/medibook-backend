@@ -18,6 +18,11 @@ export class Doctor extends Model {
     @Column({ type: DataType.STRING, allowNull: true })
     bio: string;
 
+    // Whole so'm (UZS). Nullable so doctors created before this column
+    // existed keep working — `sync({ alter: true })` adds it as NULL.
+    @Column({ type: DataType.INTEGER, allowNull: true })
+    consultation_fee: number;
+
     @Column({ type: DataType.STRING, allowNull: true })
     type: string;
 
