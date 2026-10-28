@@ -19,7 +19,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "."
-          target: "/home/ubuntu/projects"
+          target: "/home/ubuntu/medibook-backend"
 
       - name: Run Docker Compose on EC2
         uses: appleboy/ssh-action@master
