@@ -29,6 +29,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd /home/ubuntu/projects
+            git pull origin main
             docker compose down
             docker compose up --build -d
             docker compose exec backend-one npm run seed:admin
