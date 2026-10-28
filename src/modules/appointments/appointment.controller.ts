@@ -13,7 +13,7 @@ export class AppointmentController {
     constructor(private readonly appointmentService: AppointmentService) { }
 
     // Admin "Appointment Management" table (patient + doctor names, phone).
-    // Must stay above ':id' — otherwise Express treats "management" as an id.
+    // Must stay above ':id' —  otherwise Express treats "management" as an id.
     @Protected(true)
     @Roles([UserRole.admin])
     @Get('management')
